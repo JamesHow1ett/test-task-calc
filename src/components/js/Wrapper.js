@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Calculator from '../../lib/Calculator';
 
 
 
@@ -14,12 +15,16 @@ class Wrapper extends Component {
     this.handleAllClear = this.handleAllClear.bind(this);
     this.handleAddArgm = this.handleAddArgm.bind(this);
     this.handleResult = this.handleResult.bind(this);
+    this.handlePlusMinus = this.handlePlusMinus.bind(this);
     this.state = {
-      resultStart: 0,
-      resultCurr: '',
-      resultPrev: '',
+      outputStart: 0,
+      outputCurr: '',
+      outputPrev: '',
       operation: '',
-      arrayOfArgs: []
+      arrayOfArgs: [],
+      result: null,
+      errorMsg: null,
+      isChunk: false
     }
   }
 
@@ -28,119 +33,125 @@ class Wrapper extends Component {
       const target = e.target;
       return target.tagName === 'DIV' ?
         this.setState(prevState => ({
-          resultCurr: prevState.resultCurr + target.dataset.val
+          outputCurr: prevState.outputCurr + target.dataset.val
         })) :
         target.tagName === 'SPAN' ?
         this.setState(prevState => ({
-          resultCurr: prevState.resultCurr + target.parentNode.dataset.val
+          outputCurr: prevState.outputCurr + target.parentNode.dataset.val
         })) : null
     }
   }
 
   handleAllClear() {
     return (this.setState({
-      resultCurr: '',
-      resultPrev: '',
+      outputCurr: '',
+      outputPrev: '',
       operation: '',
-      arrayOfArgs: []
+      arrayOfArgs: [],
+      result: null
     }))
   }
 
   handleAddArgm() {
     return (e) => {
-      let arr = [this.state.resultCurr, e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op];
+      if (this.state.arrayOfArgs.length > 1) {
+        let arr = [...this.state.arrayOfArgs, this.state.outputCurr];
+        return this.compute(arr);
+      }
+      let arr = [this.state.outputCurr, e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op];
       return this.setState({
-        resultPrev: this.state.resultCurr,
+        outputPrev: this.state.outputCurr,
         operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
         arrayOfArgs: arr,
-        resultCurr: ''
+        outputCurr: ''
       })
     }
   }
 
   handleResult() {
-    let arr = [...this.state.arrayOfArgs, this.state.resultCurr];
-    console.log('RES', arr);
+    let arr = [...this.state.arrayOfArgs, this.state.outputCurr];
     return this.compute(arr);
   }
 
+  handlePlusMinus() {
+    return this.state.result ?
+      this.setState({
+        result: new Calculator(this.state.result, 0).plusMinus()
+      }) :
+      this.setState({
+        outputCurr: new Calculator(this.state.outputCurr, 0).plusMinus()
+      })
+  }
+
   compute(arr) {
-    // eslint-disable-next-line default-case
-    switch(arr[1]) {
-      case '+':
-        return this.fnPlus(Number(arr[0]),Number(arr[2]));
-      case '-':
-        return this.fnMinus(Number(arr[0]), Number(arr[2]));
-      case '*':
-        return this.fnMultiply(Number(arr[0]), Number(arr[2]));
-      case '/':
-        return this.fnDivide(Number(arr[0]), Number(arr[2]));
+    try {
+      switch(arr[1]) {
+        case '+':
+          return this.setState({
+            outputPrev: '',
+            outputCurr: '',
+            operation: '',
+            result: new Calculator(arr[0], arr[2]).addition()
+          });
+        case '-':
+          return this.setState({
+            outputPrev: '',
+            outputCurr: '',
+            operation: '',
+            result: new Calculator(arr[0], arr[2]).subtract()
+          });
+        case '*':
+          return this.setState({
+            outputPrev: '',
+            outputCurr: '',
+            operation: '',
+            result: new Calculator(arr[0], arr[2]).multiplication()
+          });
+        case '/':
+          return this.setState({
+            outputPrev: '',
+            outputCurr: '',
+            operation: '',
+            result: new Calculator(arr[0], arr[2]).division()
+          });
+        case '%':
+          return this.setState({
+            outputPrev: '',
+            outputCurr: '',
+            operation: '',
+            result: new Calculator(arr[0], arr[2]).percent()
+          })
+        default:
+          return;
+      }
     }
-  }
-
-  fnPlus(a, b) {
-    let res = a + b;
-    let resStr = res.toString();
-    return this.setState({
-      resultPrev: '',
-      operation: '',
-      resultCurr: resStr
-    });
-  }
-
-  fnMinus(a, b) {
-    let res = a - b;
-    let resStr = res.toString();
-    return this.setState({
-      resultPrev: '',
-      operation: '',
-      resultCurr: resStr
-    });
-  }
-
-  fnMultiply(a, b) {
-    let res = a * b;
-    let resStr = res.toString();
-    return this.setState({
-      resultPrev: '',
-      operation: '',
-      resultCurr: resStr
-    });
-  }
-
-  fnDivide(a, b) {
-    if (b === 0) {
-      return this.setState({
-        resultPrev: '',
-        operation: '',
-        resultCurr: 'Error'
-      });
+    catch (error) {
+      this.setState({
+        errorMsg: error.message
+      })
     }
-    let res = a / b;
-    let resStr = res.toString();
-    return this.setState({
-      resultPrev: '',
-      operation: '',
-      resultCurr: resStr
-    });
   }
 
 
   render() {
     return (
       <div className="calculator">
-        <div className="calculator__result">
-          <div className="calculator__result_prev">
+        <div className="calculator__output">
+          <div className="calculator__output_prev">
             <span>
-              {this.state.resultPrev}
-              {this.state.operation}
+              { this.state.outputPrev }
+              { this.state.operation }
             </span>
           </div>
-          <div className="calculator__result_curr">
+          <div className="calculator__output_curr">
             <span>
-              { this.state.resultCurr ? this.state.resultCurr.replace(/^0/g, '') : this.state.resultStart }
-              {console.log(this.state.arrayOfArgs)}
-              {console.log(this.state.resultPrev)}
+              {
+                this.state.outputCurr ?
+                (/(?<=^0)(0{1,})/g.test(this.state.outputCurr) ?
+                this.state.outputCurr.replace(/(?<=^0)(0{1,})/g, '0') :
+                this.state.outputCurr.replace(/^00{1,}(?=\d)/g, '')) :
+                (this.state.errorMsg ?? (this.state.result ?? this.state.outputStart)) 
+              }
             </span>
           </div>
         </div>
@@ -153,20 +164,23 @@ class Wrapper extends Component {
           </div>
           <div
             className="calculator__btn calculator__btn_light-grey"
+            onClick={() => (this.handlePlusMinus())}
           >
-            <span>+/-</span>
+            <span>&#177;</span>
           </div>
           <div
             className="calculator__btn calculator__btn_light-grey"
+            onClick={this.handleAddArgm()}
+            data-op="%"
           >
-            <span>%</span>
+            <span>&#37;</span>
           </div>
           <div
             className="calculator__btn calculator__btn_orange"
             onClick={this.handleAddArgm()}
             data-op="/"
           >
-            <span>/</span>
+            <span>&#247;</span>
           </div>
           <div
             className="calculator__btn calculator__btn_grey"
@@ -214,7 +228,7 @@ class Wrapper extends Component {
             onClick={this.handleAddArgm()}
             data-op="*"
           >
-            <span>*</span>
+            <span>&#215;</span>
           </div>
           <div
             className="calculator__btn calculator__btn_grey"
@@ -242,7 +256,7 @@ class Wrapper extends Component {
             onClick={this.handleAddArgm()}
             data-op="-"
           >
-            <span>-</span>
+            <span>&#8722;</span>
           </div>
           <div
             className="calculator__btn calculator__btn_grey"
@@ -270,7 +284,7 @@ class Wrapper extends Component {
             onClick={this.handleAddArgm()}
             data-op="+"
           >
-            <span>+</span>
+            <span>&#43;</span>
           </div>
           <div
             className="calculator__btn calculator__btn_big calculator__btn_grey"
@@ -282,15 +296,15 @@ class Wrapper extends Component {
           <div
             className="calculator__btn calculator__btn_grey"
             onClick={this.handleInputNumbers()}
-            data-val=","
+            data-val="."
           >
-            <span>,</span>
+            <span>&#46;</span>
           </div>
           <div
             className="calculator__btn calculator__btn_orange"
             onClick={() => (this.handleResult())}
           >
-            <span>=</span>
+            <span>&#61;</span>
           </div>
         </div>
       </div>
