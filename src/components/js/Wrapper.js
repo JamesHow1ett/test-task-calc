@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Calculator from '../../lib/Calculator';
+import Memory from '../../lib/Memory';
 
 
 
@@ -16,15 +17,17 @@ class Wrapper extends Component {
     this.handleAddArgm = this.handleAddArgm.bind(this);
     this.handleResult = this.handleResult.bind(this);
     this.handlePlusMinus = this.handlePlusMinus.bind(this);
+    this.handleMemory = this.handleMemory.bind(this);
+    this.showMemoryData = this.showMemoryData.bind(this);
     this.state = {
-      outputStart: 0,
-      outputCurr: '',
-      outputPrev: '',
-      operation: '',
       arrayOfArgs: [],
-      result: null,
       errorMsg: null,
-      isChunk: false
+      memoryData: window.localStorage.getItem('memoryData') ?? window.localStorage.setItem('memoryData', 0),
+      operation: null,
+      outputCurr: '',
+      outputPrev: null,
+      outputStart: 0,
+      result: null,
     }
   }
 
@@ -33,10 +36,12 @@ class Wrapper extends Component {
       const target = e.target;
       return target.tagName === 'DIV' ?
         this.setState(prevState => ({
+          result: null,
           outputCurr: prevState.outputCurr + target.dataset.val
         })) :
         target.tagName === 'SPAN' ?
         this.setState(prevState => ({
+          result: null,
           outputCurr: prevState.outputCurr + target.parentNode.dataset.val
         })) : null
     }
@@ -45,8 +50,8 @@ class Wrapper extends Component {
   handleAllClear() {
     return (this.setState({
       outputCurr: '',
-      outputPrev: '',
-      operation: '',
+      outputPrev: null,
+      operation: null,
       arrayOfArgs: [],
       result: null
     }))
@@ -54,9 +59,16 @@ class Wrapper extends Component {
 
   handleAddArgm() {
     return (e) => {
-      if (this.state.arrayOfArgs.length > 1) {
-        let arr = [...this.state.arrayOfArgs, this.state.outputCurr];
-        return this.compute(arr);
+      if (!this.state.result && this.state.arrayOfArgs.length > 0) { return }
+      if (this.state.result) {
+        let arr = [this.state.result, e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op];
+        return this.setState({
+          outputPrev: this.state.result,
+          operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
+          arrayOfArgs: arr,
+          result: null,
+          outputCurr: ''
+        });
       }
       let arr = [this.state.outputCurr, e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op];
       return this.setState({
@@ -64,23 +76,56 @@ class Wrapper extends Component {
         operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
         arrayOfArgs: arr,
         outputCurr: ''
-      })
+      });
     }
   }
 
   handleResult() {
     let arr = [...this.state.arrayOfArgs, this.state.outputCurr];
-    return this.compute(arr);
+    return (this.compute(arr), this.setState({arrayOfArgs: []}));
   }
 
   handlePlusMinus() {
     return this.state.result ?
       this.setState({
-        result: new Calculator(this.state.result, 0).plusMinus()
+        result: new Calculator(this.state.result).plusMinus()
       }) :
       this.setState({
-        outputCurr: new Calculator(this.state.outputCurr, 0).plusMinus()
+        outputCurr: new Calculator(this.state.outputCurr).plusMinus()
       })
+  }
+
+  handleMemory() {
+    return (e) => {
+      let a = this.state.memoryData;
+      let b = this.state.result ?? 0;
+      let operation = e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op;
+      switch(operation) {
+        case 'm+':
+          return (new Memory(a, b).saveAndAddition(), this.setState({
+            memoryData: window.localStorage.getItem('memoryData')
+          }));
+        case 'm-':
+          return (new Memory(a, b).saveAndSubtract(), this.setState({
+            memoryData: window.localStorage.getItem('memoryData')
+          }));
+        case 'mr':
+          return this.showMemoryData();
+        case 'mc':
+          return (new Memory().memoryClear(), this.setState({
+            memoryData: window.localStorage.getItem('memoryData'),
+            result: null
+          }));
+        default:
+          return;
+      }
+    }
+  }
+
+  showMemoryData() {
+    return this.setState({
+      result: this.state.memoryData
+    })
   }
 
   compute(arr) {
@@ -88,37 +133,37 @@ class Wrapper extends Component {
       switch(arr[1]) {
         case '+':
           return this.setState({
-            outputPrev: '',
+            outputPrev: null,
             outputCurr: '',
-            operation: '',
+            operation: null,
             result: new Calculator(arr[0], arr[2]).addition()
           });
         case '-':
           return this.setState({
-            outputPrev: '',
+            outputPrev: null,
             outputCurr: '',
-            operation: '',
+            operation: null,
             result: new Calculator(arr[0], arr[2]).subtract()
           });
         case '*':
           return this.setState({
-            outputPrev: '',
+            outputPrev: null,
             outputCurr: '',
-            operation: '',
+            operation: null,
             result: new Calculator(arr[0], arr[2]).multiplication()
           });
         case '/':
           return this.setState({
-            outputPrev: '',
+            outputPrev: null,
             outputCurr: '',
-            operation: '',
+            operation: null,
             result: new Calculator(arr[0], arr[2]).division()
           });
         case '%':
           return this.setState({
-            outputPrev: '',
+            outputPrev: null,
             outputCurr: '',
-            operation: '',
+            operation: null,
             result: new Calculator(arr[0], arr[2]).percent()
           })
         default:
@@ -150,7 +195,7 @@ class Wrapper extends Component {
                 (/(?<=^0)(0{1,})/g.test(this.state.outputCurr) ?
                 this.state.outputCurr.replace(/(?<=^0)(0{1,})/g, '0') :
                 this.state.outputCurr.replace(/^00{1,}(?=\d)/g, '')) :
-                (this.state.errorMsg ?? (this.state.result ?? this.state.outputStart)) 
+                (this.state.errorMsg ?? (this.state.result ?? this.state.outputStart))
               }
             </span>
           </div>
@@ -184,21 +229,29 @@ class Wrapper extends Component {
           </div>
           <div
             className="calculator__btn calculator__btn_grey"
+            onClick={this.handleMemory()}
+            data-op="mc"
           >
             <span>mc</span>
           </div>
           <div
             className="calculator__btn calculator__btn_grey"
+            onClick={this.handleMemory()}
+            data-op="mr"
           >
             <span>mr</span>
           </div>
           <div
             className="calculator__btn calculator__btn_grey"
+            onClick={this.handleMemory()}
+            data-op="m-"
           >
             <span>m-</span>
           </div>
           <div
             className="calculator__btn calculator__btn_orange"
+            onClick={this.handleMemory()}
+            data-op="m+"
           >
             <span>m+</span>
           </div>

@@ -50,7 +50,7 @@ class Calculator {
   }
 
   plusMinus() {
-    if (Number.isNaN(this.a) || Number.isNaN(this.b)) {
+    if (Number.isNaN(this.a)) {
       throw new Error('Error');
     }
     let res = this.a * (-1);
