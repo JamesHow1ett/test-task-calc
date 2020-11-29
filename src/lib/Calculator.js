@@ -9,24 +9,21 @@ class Calculator {
     if (Number.isNaN(this.a) || Number.isNaN(this.b)) {
       throw new Error('Error');
     }
-    let res = this.a + this.b;
-    return res.toString();
+    return this.a + this.b;
   }
 
   subtract() {
     if (Number.isNaN(this.a) || Number.isNaN(this.b)) {
       throw new Error('Error');
     }
-    let res = this.a - this.b;
-    return res.toString();
+    return this.a - this.b;
   }
 
   multiplication() {
     if (Number.isNaN(this.a) || Number.isNaN(this.b)) {
       throw new Error('Error');
     }
-    let res = this.a * this.b;
-    return res.toString();
+    return this.a * this.b;
   }
 
   division() {
@@ -36,8 +33,7 @@ class Calculator {
     if (this.b === 0) {
       return 'Error';
     }
-    let res = this.a / this.b;
-    return res.toString();
+    return this.a / this.b;
   }
 
   percent() {
@@ -45,17 +41,16 @@ class Calculator {
       throw new Error('Error');
     }
     let percent = this.a / 100;
-    let res = this.b * percent;
-    return res.toString();
+    return this.b * percent;
   }
 
   plusMinus() {
     if (Number.isNaN(this.a)) {
       throw new Error('Error');
     }
-    let res = this.a * (-1);
-    return res.toString();
+    return this.a * (-1);
   }
 }
 
-export default Calculator;
+module.exports = Calculator;
+//export default Calculator;
