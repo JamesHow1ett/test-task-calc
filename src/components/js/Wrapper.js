@@ -136,35 +136,35 @@ class Wrapper extends Component {
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: new Calculator(arr[0], arr[2]).addition()
+            result: (new Calculator(arr[0], arr[2]).addition()).toString()
           });
         case '-':
           return this.setState({
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: new Calculator(arr[0], arr[2]).subtract()
+            result: (new Calculator(arr[0], arr[2]).subtract()).toString()
           });
         case '*':
           return this.setState({
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: new Calculator(arr[0], arr[2]).multiplication()
+            result: (new Calculator(arr[0], arr[2]).multiplication()).toString()
           });
         case '/':
           return this.setState({
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: new Calculator(arr[0], arr[2]).division()
+            result: (new Calculator(arr[0], arr[2]).division()).toString()
           });
         case '%':
           return this.setState({
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: new Calculator(arr[0], arr[2]).percent()
+            result: (new Calculator(arr[0], arr[2]).percent()).toString()
           })
         default:
           return;
