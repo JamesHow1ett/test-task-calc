@@ -2,12 +2,9 @@ import React, { Component } from 'react';
 import Calculator from '../../lib/Calculator';
 import Memory from '../../lib/Memory';
 
-
-
 // styles
 import '../scss/Wrapper.scss';
 
-//let arrayOfArgs = [];
 
 class Wrapper extends Component {
   constructor(props) {
@@ -23,6 +20,7 @@ class Wrapper extends Component {
       arrayOfArgs: [],
       errorMsg: null,
       memoryData: window.localStorage.getItem('memoryData') ?? window.localStorage.setItem('memoryData', 0),
+      memoryIsDirty: JSON.parse(window.localStorage.getItem('memoryIsDirty') ?? window.localStorage.setItem('memoryIsDirty', false)),
       operation: null,
       outputCurr: '',
       outputPrev: null,
@@ -36,23 +34,26 @@ class Wrapper extends Component {
       const target = e.target;
       return target.tagName === 'DIV' ?
         this.setState(prevState => ({
-          result: null,
-          outputCurr: prevState.outputCurr + target.dataset.val
+          outputCurr: prevState.outputCurr + target.dataset.val,
+          errorMsg: null,
+          result: null
         })) :
         target.tagName === 'SPAN' ?
         this.setState(prevState => ({
-          result: null,
-          outputCurr: prevState.outputCurr + target.parentNode.dataset.val
+          outputCurr: prevState.outputCurr + target.parentNode.dataset.val,
+          errorMsg: null,
+          result: null
         })) : null
     }
   }
 
   handleAllClear() {
     return (this.setState({
+      arrayOfArgs: [],
+      errorMsg: null,
+      operation: null,
       outputCurr: '',
       outputPrev: null,
-      operation: null,
-      arrayOfArgs: [],
       result: null
     }))
   }
@@ -63,19 +64,21 @@ class Wrapper extends Component {
       if (this.state.result) {
         let arr = [this.state.result, e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op];
         return this.setState({
-          outputPrev: this.state.result,
-          operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
           arrayOfArgs: arr,
-          result: null,
-          outputCurr: ''
+          errorMsg: null,
+          operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
+          outputPrev: this.state.result,
+          outputCurr: '',
+          result: null
         });
       }
       let arr = [this.state.outputCurr, e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op];
       return this.setState({
-        outputPrev: this.state.outputCurr,
-        operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
         arrayOfArgs: arr,
-        outputCurr: ''
+        errorMsg: null,
+        operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
+        outputCurr: '',
+        outputPrev: this.state.outputCurr
       });
     }
   }
@@ -86,13 +89,10 @@ class Wrapper extends Component {
   }
 
   handlePlusMinus() {
-    return this.state.result ?
-      this.setState({
-        result: new Calculator(this.state.result).plusMinus()
-      }) :
-      this.setState({
-        outputCurr: new Calculator(this.state.outputCurr).plusMinus()
-      })
+    return this.setState({
+      outputCurr: '',
+      result: new Calculator(this.state.result ?? this.state.outputCurr).plusMinus()
+    })
   }
 
   handleMemory() {
@@ -103,17 +103,20 @@ class Wrapper extends Component {
       switch(operation) {
         case 'm+':
           return (new Memory(a, b).saveAndAddition(), this.setState({
-            memoryData: window.localStorage.getItem('memoryData')
+            memoryData: window.localStorage.getItem('memoryData'),
+            memoryIsDirty: JSON.parse(window.localStorage.getItem('memoryIsDirty'))
           }));
         case 'm-':
-          return (new Memory(a, b).saveAndSubtract(), this.setState({
-            memoryData: window.localStorage.getItem('memoryData')
+          return (new Memory(a, b, this.state.memoryIsDirty).saveAndSubtract(), this.setState({
+            memoryData: window.localStorage.getItem('memoryData'),
+            memoryIsDirty: JSON.parse(window.localStorage.getItem('memoryIsDirty'))
           }));
         case 'mr':
           return this.showMemoryData();
         case 'mc':
           return (new Memory().memoryClear(), this.setState({
             memoryData: window.localStorage.getItem('memoryData'),
+            memoryIsDirty: JSON.parse(window.localStorage.getItem('memoryIsDirty')),
             result: null
           }));
         default:
@@ -172,7 +175,10 @@ class Wrapper extends Component {
     }
     catch (error) {
       this.setState({
-        errorMsg: error.message
+        errorMsg: error.message,
+        operation: null,
+        outputCurr: '',
+        outputPrev: null
       })
     }
   }

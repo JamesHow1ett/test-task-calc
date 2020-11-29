@@ -9,21 +9,21 @@ class Calculator {
     if (Number.isNaN(this.a) || Number.isNaN(this.b)) {
       throw new Error('Error');
     }
-    return this.a + this.b;
+    return Math.floor((this.a + this.b) * 1000) / 1000;
   }
 
   subtract() {
     if (Number.isNaN(this.a) || Number.isNaN(this.b)) {
       throw new Error('Error');
     }
-    return this.a - this.b;
+    return Math.floor((this.a - this.b) * 1000) / 1000;
   }
 
   multiplication() {
     if (Number.isNaN(this.a) || Number.isNaN(this.b)) {
       throw new Error('Error');
     }
-    return this.a * this.b;
+    return Math.floor((this.a * this.b) * 1000) / 1000;
   }
 
   division() {
@@ -31,9 +31,9 @@ class Calculator {
       throw new Error('Error');
     }
     if (this.b === 0) {
-      return 'Error';
+      throw new Error('Error');
     }
-    return this.a / this.b;
+    return Math.floor((this.a / this.b) * 1000) / 1000;
   }
 
   percent() {
@@ -41,7 +41,7 @@ class Calculator {
       throw new Error('Error');
     }
     let percent = this.a / 100;
-    return this.b * percent;
+    return Math.floor((this.b * percent) * 1000) / 1000;
   }
 
   plusMinus() {
