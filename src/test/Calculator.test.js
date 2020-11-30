@@ -29,7 +29,7 @@ test('division 8 / 4 to equal 2', () => {
 });
 
 test('division 2 / 0 to equal Error', () => {
-  expect(new Calculator(2, 0).division()).toMatch(/Error/);
+  expect(() => (new Calculator(2, 0).division())).toThrowError(Error);
 });
 
 test('percent 20 % 10 to equal 2', () => {

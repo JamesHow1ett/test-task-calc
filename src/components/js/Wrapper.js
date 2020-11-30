@@ -17,10 +17,9 @@ class Wrapper extends Component {
     this.handleMemory = this.handleMemory.bind(this);
     this.showMemoryData = this.showMemoryData.bind(this);
     this.state = {
-      arrayOfArgs: [],
       errorMsg: null,
       memoryData: window.localStorage.getItem('memoryData') ?? window.localStorage.setItem('memoryData', 0),
-      memoryIsDirty: JSON.parse(window.localStorage.getItem('memoryIsDirty') ?? window.localStorage.setItem('memoryIsDirty', false)),
+      memoryIsDirty: JSON.parse(window.localStorage.getItem('memoryIsDirty')) ?? window.localStorage.setItem('memoryIsDirty', false),
       operation: null,
       outputCurr: '',
       outputPrev: null,
@@ -49,7 +48,6 @@ class Wrapper extends Component {
 
   handleAllClear() {
     return (this.setState({
-      arrayOfArgs: [],
       errorMsg: null,
       operation: null,
       outputCurr: '',
@@ -60,11 +58,14 @@ class Wrapper extends Component {
 
   handleAddArgm() {
     return (e) => {
-      if (!this.state.result && this.state.arrayOfArgs.length > 0) { return }
+      if (this.state.outputPrev && this.state.outputCurr && this.state.operation) {
+        let arrayOfArguments = [this.state.outputPrev, this.state.operation, this.state.outputCurr];
+        return (this.compute(arrayOfArguments, true), this.setState({
+          operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op
+        }));
+      }
       if (this.state.result) {
-        let arr = [this.state.result, e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op];
         return this.setState({
-          arrayOfArgs: arr,
           errorMsg: null,
           operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
           outputPrev: this.state.result,
@@ -72,9 +73,7 @@ class Wrapper extends Component {
           result: null
         });
       }
-      let arr = [this.state.outputCurr, e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op];
       return this.setState({
-        arrayOfArgs: arr,
         errorMsg: null,
         operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
         outputCurr: '',
@@ -84,15 +83,15 @@ class Wrapper extends Component {
   }
 
   handleResult() {
-    let arr = [...this.state.arrayOfArgs, this.state.outputCurr];
-    return (this.compute(arr), this.setState({arrayOfArgs: []}));
+    let arrayOfArguments = [this.state.outputPrev, this.state.operation, this.state.outputCurr ? this.state.outputCurr : this.state.outputStart];
+    return this.compute(arrayOfArguments);
   }
 
   handlePlusMinus() {
     return this.setState({
       outputCurr: '',
       result: new Calculator(this.state.result ?? this.state.outputCurr).plusMinus()
-    })
+    });
   }
 
   handleMemory() {
@@ -128,46 +127,78 @@ class Wrapper extends Component {
   showMemoryData() {
     return this.setState({
       result: this.state.memoryData
-    })
+    });
   }
 
-  compute(arr) {
+  compute(arrayOfArguments, isChunk = false) {
     try {
-      switch(arr[1]) {
+      switch(arrayOfArguments[1]) {
         case '+':
+          if (isChunk) {
+            return this.setState({
+              outputPrev: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).addition()).toString(),
+              outputCurr: '',
+              operation: this.state.operation,
+              result: null
+            });
+          }
           return this.setState({
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: (new Calculator(arr[0], arr[2]).addition()).toString()
+            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).addition()).toString()
           });
         case '-':
+          if (isChunk) {
+            return this.setState({
+              outputPrev: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).subtract()).toString(),
+              outputCurr: '',
+              operation: this.state.operation,
+              result: null
+            });
+          }
           return this.setState({
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: (new Calculator(arr[0], arr[2]).subtract()).toString()
+            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).subtract()).toString()
           });
         case '*':
+          if (isChunk) {
+            return this.setState({
+              outputPrev: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).multiplication()).toString(),
+              outputCurr: '',
+              operation: this.state.operation,
+              result: null
+            });
+          }
           return this.setState({
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: (new Calculator(arr[0], arr[2]).multiplication()).toString()
+            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).multiplication()).toString()
           });
         case '/':
+          if (isChunk) {
+            return this.setState({
+              outputPrev: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).division()).toString(),
+              outputCurr: '',
+              operation: this.state.operation,
+              result: null
+            });
+          }
           return this.setState({
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: (new Calculator(arr[0], arr[2]).division()).toString()
+            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).division()).toString()
           });
         case '%':
           return this.setState({
             outputPrev: null,
             outputCurr: '',
             operation: null,
-            result: (new Calculator(arr[0], arr[2]).percent()).toString()
+            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).percent()).toString()
           })
         default:
           return;
@@ -179,7 +210,7 @@ class Wrapper extends Component {
         operation: null,
         outputCurr: '',
         outputPrev: null
-      })
+      });
     }
   }
 
