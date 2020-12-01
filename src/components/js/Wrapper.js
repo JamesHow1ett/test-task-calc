@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
-import Calculator from '../../lib/Calculator';
 import Memory from '../../lib/Memory';
+import StateManager from '../../lib/StateManager';
+import buttonValues from '../../lib/buttonsValue';
 
 // styles
 import '../scss/Wrapper.scss';
 
+// initial buttonValues obj
+const buttons = buttonValues();
 
 class Wrapper extends Component {
   constructor(props) {
@@ -32,53 +35,31 @@ class Wrapper extends Component {
     return (e) => {
       const target = e.target;
       return target.tagName === 'DIV' ?
-        this.setState(prevState => ({
-          outputCurr: prevState.outputCurr + target.dataset.val,
-          errorMsg: null,
-          result: null
-        })) :
+        this.setState(prevState => (
+          new StateManager().inputNumbers(prevState.outputCurr, target.dataset.val)
+        )) :
         target.tagName === 'SPAN' ?
-        this.setState(prevState => ({
-          outputCurr: prevState.outputCurr + target.parentNode.dataset.val,
-          errorMsg: null,
-          result: null
-        })) : null
+        this.setState(prevState => (
+          new StateManager().inputNumbers(prevState.outputCurr, target.parentNode.dataset.val)
+        )) : null
     }
   }
 
   handleAllClear() {
-    return (this.setState({
-      errorMsg: null,
-      operation: null,
-      outputCurr: '',
-      outputPrev: null,
-      result: null
-    }))
+    return (this.setState(new StateManager().clearState()));
   }
 
   handleAddArgm() {
     return (e) => {
+      let arrayOfArguments = [this.state.outputPrev, this.state.operation, this.state.outputCurr];
+      let operation = e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op;
       if (this.state.outputPrev && this.state.outputCurr && this.state.operation) {
-        let arrayOfArguments = [this.state.outputPrev, this.state.operation, this.state.outputCurr];
-        return (this.compute(arrayOfArguments, true), this.setState({
-          operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op
-        }));
+        return (this.compute(arrayOfArguments, true), this.setState(new StateManager().setArguments(operation, true)));
       }
       if (this.state.result) {
-        return this.setState({
-          errorMsg: null,
-          operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
-          outputPrev: this.state.result,
-          outputCurr: '',
-          result: null
-        });
+        return this.setState(new StateManager().setArguments(operation, false, true, this.state.result));
       }
-      return this.setState({
-        errorMsg: null,
-        operation: e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op,
-        outputCurr: '',
-        outputPrev: this.state.outputCurr
-      });
+      return this.setState(new StateManager().setArguments(operation, false, false, this.state.outputCurr));
     }
   }
 
@@ -88,10 +69,7 @@ class Wrapper extends Component {
   }
 
   handlePlusMinus() {
-    return this.setState({
-      outputCurr: '',
-      result: new Calculator(this.state.result ?? this.state.outputCurr).plusMinus()
-    });
+    return this.setState(new StateManager().setPlusMinus(this.state.result ?? this.state.outputCurr));
   }
 
   handleMemory() {
@@ -134,83 +112,51 @@ class Wrapper extends Component {
     try {
       switch(arrayOfArguments[1]) {
         case '+':
-          if (isChunk) {
-            return this.setState({
-              outputPrev: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).addition()).toString(),
-              outputCurr: '',
-              operation: this.state.operation,
-              result: null
-            });
-          }
-          return this.setState({
-            outputPrev: null,
-            outputCurr: '',
-            operation: null,
-            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).addition()).toString()
-          });
+          return this.setState(new StateManager().setStateAfterCalculate(
+            arrayOfArguments[0],
+            arrayOfArguments[2],
+            'addition',
+            isChunk,
+            '+'
+          ));
         case '-':
-          if (isChunk) {
-            return this.setState({
-              outputPrev: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).subtract()).toString(),
-              outputCurr: '',
-              operation: this.state.operation,
-              result: null
-            });
-          }
-          return this.setState({
-            outputPrev: null,
-            outputCurr: '',
-            operation: null,
-            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).subtract()).toString()
-          });
+          return this.setState(new StateManager().setStateAfterCalculate(
+            arrayOfArguments[0],
+            arrayOfArguments[2],
+            'subtract',
+            isChunk,
+            '-'
+          ));
         case '*':
-          if (isChunk) {
-            return this.setState({
-              outputPrev: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).multiplication()).toString(),
-              outputCurr: '',
-              operation: this.state.operation,
-              result: null
-            });
-          }
-          return this.setState({
-            outputPrev: null,
-            outputCurr: '',
-            operation: null,
-            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).multiplication()).toString()
-          });
+          return this.setState(new StateManager().setStateAfterCalculate(
+            arrayOfArguments[0],
+            arrayOfArguments[2],
+            'multiplication',
+            isChunk,
+            '*'
+          ));
         case '/':
-          if (isChunk) {
-            return this.setState({
-              outputPrev: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).division()).toString(),
-              outputCurr: '',
-              operation: this.state.operation,
-              result: null
-            });
-          }
-          return this.setState({
-            outputPrev: null,
-            outputCurr: '',
-            operation: null,
-            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).division()).toString()
-          });
+          return this.setState(new StateManager().setStateAfterCalculate(
+            arrayOfArguments[0],
+            arrayOfArguments[2],
+            'division',
+            isChunk,
+            '/'
+          ));
         case '%':
-          return this.setState({
-            outputPrev: null,
-            outputCurr: '',
-            operation: null,
-            result: (new Calculator(arrayOfArguments[0], arrayOfArguments[2]).percent()).toString()
-          })
+          return this.setState(new StateManager().setStateAfterCalculate(
+            arrayOfArguments[0],
+            arrayOfArguments[2],
+            'percent',
+            isChunk,
+            '%'
+          ));
         default:
           return;
       }
     }
     catch (error) {
-      this.setState({
-        errorMsg: error.message,
-        operation: null,
-        outputCurr: '',
-        outputPrev: null
-      });
+      this.setState(new StateManager().setErrorState(error));
     }
   }
 
@@ -237,164 +183,135 @@ class Wrapper extends Component {
             </span>
           </div>
         </div>
-        <div className="calculator__controls">
-          <div
-            className="calculator__btn calculator__btn_light-grey"
-            onClick={() => (this.handleAllClear())}
-          >
-            <span>AC</span>
+        <div className="calculator__controls-row">
+          <div className="calculator__controls-row_first">
+            {
+              buttons.operatorValuesFirstRow.map((elem, index, array) => {
+                const lastIndex = array.length - 1;
+                switch(elem) {
+                  case 'AC':
+                    return (
+                      <div
+                        className="calculator__btn calculator__btn_light-grey"
+                        onClick={() => (this.handleAllClear())}
+                      >
+                        <span>{elem}</span>
+                      </div>
+                    );
+                  case '+/-':
+                    return (
+                      <div
+                        className="calculator__btn calculator__btn_light-grey"
+                        onClick={() => (this.handlePlusMinus())}
+                      >
+                        <span>&#177;</span>
+                      </div>
+                    );
+                  default:
+                    return index < lastIndex ? (
+                      <div
+                        className="calculator__btn calculator__btn_light-grey"
+                        onClick={this.handleAddArgm()}
+                        data-op={elem}
+                      >
+                        <span>{elem}</span>
+                      </div>
+                    ) :
+                    (
+                      <div
+                        className="calculator__btn calculator__btn_orange"
+                        onClick={this.handleAddArgm()}
+                        data-op={elem}
+                      >
+                        <span>{elem}</span>
+                      </div>
+                    );
+                }
+              })
+            }
           </div>
-          <div
-            className="calculator__btn calculator__btn_light-grey"
-            onClick={() => (this.handlePlusMinus())}
-          >
-            <span>&#177;</span>
+          <div className="calculator__controls-row_second">
+            {
+              buttons.memoryRow.map((elem, index, array) => {
+                const lastIndex = array.length - 1;
+                return index < lastIndex ?
+                (
+                  <div
+                    className="calculator__btn calculator__btn_grey"
+                    onClick={this.handleMemory()}
+                    data-op={elem}
+                  >
+                    <span>{elem}</span>
+                  </div>
+                ) :
+                (
+                  <div
+                    className="calculator__btn calculator__btn_orange"
+                    onClick={this.handleMemory()}
+                    data-op={elem}
+                  >
+                    <span>{elem}</span>
+                  </div>
+                )
+              })
+            }
           </div>
-          <div
-            className="calculator__btn calculator__btn_light-grey"
-            onClick={this.handleAddArgm()}
-            data-op="%"
-          >
-            <span>&#37;</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_orange"
-            onClick={this.handleAddArgm()}
-            data-op="/"
-          >
-            <span>&#247;</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleMemory()}
-            data-op="mc"
-          >
-            <span>mc</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleMemory()}
-            data-op="mr"
-          >
-            <span>mr</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleMemory()}
-            data-op="m-"
-          >
-            <span>m-</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_orange"
-            onClick={this.handleMemory()}
-            data-op="m+"
-          >
-            <span>m+</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="7"
-          >
-            <span>7</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="8"
-          >
-            <span>8</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="9"
-          >
-            <span>9</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_orange"
-            onClick={this.handleAddArgm()}
-            data-op="*"
-          >
-            <span>&#215;</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="4"
-          >
-            <span>4</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="5"
-          >
-            <span>5</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="6"
-          >
-            <span>6</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_orange"
-            onClick={this.handleAddArgm()}
-            data-op="-"
-          >
-            <span>&#8722;</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="1"
-          >
-            <span>1</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="2"
-          >
-            <span>2</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="3"
-          >
-            <span>3</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_orange"
-            onClick={this.handleAddArgm()}
-            data-op="+"
-          >
-            <span>&#43;</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_big calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="0"
-          >
-            <span>0</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_grey"
-            onClick={this.handleInputNumbers()}
-            data-val="."
-          >
-            <span>&#46;</span>
-          </div>
-          <div
-            className="calculator__btn calculator__btn_orange"
-            onClick={() => (this.handleResult())}
-          >
-            <span>&#61;</span>
+          <div className="calculator__controls-row_third">
+            <div className="calculator__controls-row_third-grid">
+              {
+                buttons.numberValues.reverse().map(item => {
+                  switch(item) {
+                    case '0':
+                      return (
+                        <div
+                          className="calculator__btn calculator__btn_big calculator__btn_grey"
+                          onClick={this.handleInputNumbers()}
+                          data-val={item}
+                        >
+                          <span>{item}</span>
+                        </div>
+                      );
+                    default:
+                      return (
+                        <div
+                          className="calculator__btn calculator__btn_grey"
+                          onClick={this.handleInputNumbers()}
+                          data-val={item}
+                        >
+                          <span>{item}</span>
+                        </div>
+                      );
+                  }
+                })
+              }
+            </div>
+            <div className="calculator__controls-row_third-column">
+              {
+                buttons.operatorRight.map(item => {
+                  switch(item) {
+                    case '=':
+                      return (
+                        <div
+                          className="calculator__btn calculator__btn_orange"
+                          onClick={this.handleResult}
+                        >
+                          <span>{item}</span>
+                        </div>
+                      );
+                    default:
+                      return (
+                        <div
+                          className="calculator__btn calculator__btn_orange"
+                          onClick={this.handleAddArgm()}
+                          data-op={item}
+                        >
+                          <span>{item}</span>
+                        </div>
+                      );
+                  }
+                })
+              }
+            </div>
           </div>
         </div>
       </div>
