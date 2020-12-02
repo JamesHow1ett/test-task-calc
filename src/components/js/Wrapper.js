@@ -2,9 +2,7 @@ import React, { Component } from 'react';
 import StateManager from '../../lib/StateManager';
 import MemoryStateManager from '../../lib/MemoryStateManager';
 import buttonValues from '../../lib/buttonsValue';
-
-// components
-import Button from './Button';
+import formatOutputString from '../..//lib/formatOutput';
 
 // styles
 import '../scss/Wrapper.scss';
@@ -160,9 +158,7 @@ class Wrapper extends Component {
             <span>
               {
                 this.state.outputCurr ?
-                (/(?<=^0)(0{1,})/g.test(this.state.outputCurr) ?
-                this.state.outputCurr.replace(/(?<=^0)(0{1,})/g, '0') :
-                this.state.outputCurr.replace(/^00{1,}(?=\d)/g, '')) :
+                formatOutputString(this.state.outputCurr) :
                 (this.state.errorMsg ?? (this.state.result ?? this.state.outputStart))
               }
             </span>
@@ -176,40 +172,44 @@ class Wrapper extends Component {
                 switch(elem) {
                   case 'AC':
                     return (
-                      <Button
+                      <div
                         className="calculator__btn calculator__btn_light-grey"
                         onClick={() => (this.handleAllClear())}
+                        key={index}
                       >
                         <span>{elem}</span>
-                      </Button>
+                      </div>
                     );
                   case '+/-':
                     return (
-                      <Button
+                      <div
                         className="calculator__btn calculator__btn_light-grey"
                         onClick={() => (this.handlePlusMinus())}
+                        key={index}
                       >
                         <span>&#177;</span>
-                      </Button>
+                      </div>
                     );
                   default:
                     return index < lastIndex ? (
-                      <Button
+                      <div
                         className="calculator__btn calculator__btn_light-grey"
                         onClick={this.handleAddArgm()}
                         data-op={elem}
+                        key={index}
                       >
                         <span>{elem}</span>
-                      </Button>
+                      </div>
                     ) :
                     (
-                      <Button
+                      <div
                         className="calculator__btn calculator__btn_orange"
                         onClick={this.handleAddArgm()}
                         data-op={elem}
+                        key={index}
                       >
                         <span>{elem}</span>
-                      </Button>
+                      </div>
                     );
                 }
               })
@@ -221,22 +221,24 @@ class Wrapper extends Component {
                 const lastIndex = array.length - 1;
                 return index < lastIndex ?
                 (
-                  <Button
+                  <div
                     className="calculator__btn calculator__btn_grey"
                     onClick={this.handleMemory()}
                     data-op={elem}
+                    key={index}
                   >
                     <span>{elem}</span>
-                  </Button>
+                  </div>
                 ) :
                 (
-                  <Button
+                  <div
                     className="calculator__btn calculator__btn_orange"
                     onClick={this.handleMemory()}
                     data-op={elem}
+                    key={index}
                   >
                     <span>{elem}</span>
-                  </Button>
+                  </div>
                 )
               })
             }
@@ -244,27 +246,29 @@ class Wrapper extends Component {
           <div className="calculator__controls-row_third">
             <div className="calculator__controls-row_third-grid">
               {
-                buttons.numberValues.reverse().map(item => {
+                buttons.numberValues.map((item, index) => {
                   switch(item) {
                     case '0':
                       return (
-                        <Button
+                        <div
                           className="calculator__btn calculator__btn_big calculator__btn_grey"
                           onClick={this.handleInputNumbers()}
                           data-val={item}
+                          key={index}
                         >
                           <span>{item}</span>
-                        </Button>
+                        </div>
                       );
                     default:
                       return (
-                        <Button
+                        <div
                           className="calculator__btn calculator__btn_grey"
                           onClick={this.handleInputNumbers()}
                           data-val={item}
+                          key={index}
                         >
                           <span>{item}</span>
-                        </Button>
+                        </div>
                       );
                   }
                 })
@@ -272,26 +276,28 @@ class Wrapper extends Component {
             </div>
             <div className="calculator__controls-row_third-column">
               {
-                buttons.operatorRight.map(item => {
+                buttons.operatorRight.map((item, index) => {
                   switch(item) {
                     case '=':
                       return (
-                        <Button
+                        <div
                           className="calculator__btn calculator__btn_orange"
                           onClick={this.handleResult}
+                          key={index}
                         >
                           <span>{item}</span>
-                        </Button>
+                        </div>
                       );
                     default:
                       return (
-                        <Button
+                        <div
                           className="calculator__btn calculator__btn_orange"
                           onClick={this.handleAddArgm()}
                           data-op={item}
+                          key={index}
                         >
                           <span>{item}</span>
-                        </Button>
+                        </div>
                       );
                   }
                 })
