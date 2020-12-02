@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
-import Memory from '../../lib/Memory';
 import StateManager from '../../lib/StateManager';
+import MemoryStateManager from '../../lib/MemoryStateManager';
 import buttonValues from '../../lib/buttonsValue';
+
+// components
+import Button from './Button';
 
 // styles
 import '../scss/Wrapper.scss';
@@ -75,27 +78,23 @@ class Wrapper extends Component {
   handleMemory() {
     return (e) => {
       let a = this.state.memoryData;
-      let b = this.state.result ?? 0;
+      let b = this.state.result ?? this.state.outputCurr;
       let operation = e.target.dataset.op ? e.target.dataset.op : e.target.parentNode.dataset.op;
       switch(operation) {
         case 'm+':
-          return (new Memory(a, b).saveAndAddition(), this.setState({
-            memoryData: window.localStorage.getItem('memoryData'),
-            memoryIsDirty: JSON.parse(window.localStorage.getItem('memoryIsDirty'))
-          }));
+          return this.setState(
+            new MemoryStateManager(a, b, operation).setStateAfterSaveToMemory()
+          );
         case 'm-':
-          return (new Memory(a, b, this.state.memoryIsDirty).saveAndSubtract(), this.setState({
-            memoryData: window.localStorage.getItem('memoryData'),
-            memoryIsDirty: JSON.parse(window.localStorage.getItem('memoryIsDirty'))
-          }));
+          return this.setState(
+            new MemoryStateManager(a, b, operation, this.state.memoryIsDirty).setStateAfterSaveToMemory()
+          );
         case 'mr':
           return this.showMemoryData();
         case 'mc':
-          return (new Memory().memoryClear(), this.setState({
-            memoryData: window.localStorage.getItem('memoryData'),
-            memoryIsDirty: JSON.parse(window.localStorage.getItem('memoryIsDirty')),
-            result: null
-          }));
+          return this.setState(
+            new MemoryStateManager(0, 0, operation).setStateAfterSaveToMemory()
+          )
         default:
           return;
       }
@@ -104,6 +103,7 @@ class Wrapper extends Component {
 
   showMemoryData() {
     return this.setState({
+      outputCurr: '',
       result: this.state.memoryData
     });
   }
@@ -112,45 +112,25 @@ class Wrapper extends Component {
     try {
       switch(arrayOfArguments[1]) {
         case '+':
-          return this.setState(new StateManager().setStateAfterCalculate(
-            arrayOfArguments[0],
-            arrayOfArguments[2],
-            'addition',
-            isChunk,
-            '+'
-          ));
+          return this.setState(
+            new StateManager().setStateAfterCalculate(arrayOfArguments[0], arrayOfArguments[2], 'addition', isChunk, '+')
+          );
         case '-':
-          return this.setState(new StateManager().setStateAfterCalculate(
-            arrayOfArguments[0],
-            arrayOfArguments[2],
-            'subtract',
-            isChunk,
-            '-'
-          ));
+          return this.setState(
+            new StateManager().setStateAfterCalculate(arrayOfArguments[0], arrayOfArguments[2], 'subtract', isChunk, '-')
+          );
         case '*':
-          return this.setState(new StateManager().setStateAfterCalculate(
-            arrayOfArguments[0],
-            arrayOfArguments[2],
-            'multiplication',
-            isChunk,
-            '*'
-          ));
+          return this.setState(
+            new StateManager().setStateAfterCalculate(arrayOfArguments[0], arrayOfArguments[2], 'multiplication', isChunk, '*')
+          );
         case '/':
-          return this.setState(new StateManager().setStateAfterCalculate(
-            arrayOfArguments[0],
-            arrayOfArguments[2],
-            'division',
-            isChunk,
-            '/'
-          ));
+          return this.setState(
+            new StateManager().setStateAfterCalculate(arrayOfArguments[0], arrayOfArguments[2], 'division', isChunk, '/')
+          );
         case '%':
-          return this.setState(new StateManager().setStateAfterCalculate(
-            arrayOfArguments[0],
-            arrayOfArguments[2],
-            'percent',
-            isChunk,
-            '%'
-          ));
+          return this.setState(
+            new StateManager().setStateAfterCalculate(arrayOfArguments[0], arrayOfArguments[2], 'percent', isChunk, '%')
+          );
         default:
           return;
       }
@@ -166,6 +146,11 @@ class Wrapper extends Component {
       <div className="calculator">
         <div className="calculator__output">
           <div className="calculator__output_prev">
+            <span>
+              {
+                this.state.memoryIsDirty ? 'memory' : ''
+              }
+            </span>
             <span>
               { this.state.outputPrev }
               { this.state.operation }
@@ -191,40 +176,40 @@ class Wrapper extends Component {
                 switch(elem) {
                   case 'AC':
                     return (
-                      <div
+                      <Button
                         className="calculator__btn calculator__btn_light-grey"
                         onClick={() => (this.handleAllClear())}
                       >
                         <span>{elem}</span>
-                      </div>
+                      </Button>
                     );
                   case '+/-':
                     return (
-                      <div
+                      <Button
                         className="calculator__btn calculator__btn_light-grey"
                         onClick={() => (this.handlePlusMinus())}
                       >
                         <span>&#177;</span>
-                      </div>
+                      </Button>
                     );
                   default:
                     return index < lastIndex ? (
-                      <div
+                      <Button
                         className="calculator__btn calculator__btn_light-grey"
                         onClick={this.handleAddArgm()}
                         data-op={elem}
                       >
                         <span>{elem}</span>
-                      </div>
+                      </Button>
                     ) :
                     (
-                      <div
+                      <Button
                         className="calculator__btn calculator__btn_orange"
                         onClick={this.handleAddArgm()}
                         data-op={elem}
                       >
                         <span>{elem}</span>
-                      </div>
+                      </Button>
                     );
                 }
               })
@@ -236,22 +221,22 @@ class Wrapper extends Component {
                 const lastIndex = array.length - 1;
                 return index < lastIndex ?
                 (
-                  <div
+                  <Button
                     className="calculator__btn calculator__btn_grey"
                     onClick={this.handleMemory()}
                     data-op={elem}
                   >
                     <span>{elem}</span>
-                  </div>
+                  </Button>
                 ) :
                 (
-                  <div
+                  <Button
                     className="calculator__btn calculator__btn_orange"
                     onClick={this.handleMemory()}
                     data-op={elem}
                   >
                     <span>{elem}</span>
-                  </div>
+                  </Button>
                 )
               })
             }
@@ -263,23 +248,23 @@ class Wrapper extends Component {
                   switch(item) {
                     case '0':
                       return (
-                        <div
+                        <Button
                           className="calculator__btn calculator__btn_big calculator__btn_grey"
                           onClick={this.handleInputNumbers()}
                           data-val={item}
                         >
                           <span>{item}</span>
-                        </div>
+                        </Button>
                       );
                     default:
                       return (
-                        <div
+                        <Button
                           className="calculator__btn calculator__btn_grey"
                           onClick={this.handleInputNumbers()}
                           data-val={item}
                         >
                           <span>{item}</span>
-                        </div>
+                        </Button>
                       );
                   }
                 })
@@ -291,22 +276,22 @@ class Wrapper extends Component {
                   switch(item) {
                     case '=':
                       return (
-                        <div
+                        <Button
                           className="calculator__btn calculator__btn_orange"
                           onClick={this.handleResult}
                         >
                           <span>{item}</span>
-                        </div>
+                        </Button>
                       );
                     default:
                       return (
-                        <div
+                        <Button
                           className="calculator__btn calculator__btn_orange"
                           onClick={this.handleAddArgm()}
                           data-op={item}
                         >
                           <span>{item}</span>
-                        </div>
+                        </Button>
                       );
                   }
                 })
